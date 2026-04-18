@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>FocusQuest — Concentration Trainer</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  }
+  body {
+    background: radial-gradient(ellipse at top, #1e1b4b 0%, #0f172a 50%, #020617 100%);
+    color: #f8fafc;
+    min-height: 100vh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overflow-x: hidden;
+  }
+  #app { max-width: 640px; margin: 0 auto; padding: 16px 16px 96px; position: relative; }
+
+/* ===== Typography ===== */
+h1 {
+font-size: 32px; font-weight: 800; letter-spacing: -0.02em;
+margin: 8px 0 4px; background: linear-gradient(135deg, #a5b4fc, #f0abfc, #fbbf24);
+-webkit-background-clip: text; background-clip: text; color: transparent;
+}
+h2 { font-size: 22px; font-weight: 700; margin: 20px 0 12px; letter-spacing: -0.01em; }
+h3 { font-size: 16px; font-weight: 600; margin: 14px 0 8px; color: #cbd5e1; }
+.sub { font-size: 13px; color: #94a3b8; margin: 0 0 16px; }
+
+/* ===== Cards ===== */
+.card {
+background: rgba(30, 41, 59, 0.5);
+backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+border: 1px solid rgba(148, 163, 184, 0.15);
+border-radius: 20px; padding: 16px; margin-bottom: 14px;
+box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+/* ===== Buttons ===== */
+.btn {
+display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+padding: 14px 20px; border-radius: 14px; border: none;
+font-size: 16px; font-weight: 600; cursor: pointer;
+background: linear-gradient(135deg, #6366f1, #8b5cf6);
+color: white; width: 100%; min-height: 52px;
+transition: transform 0.15s, box-shadow 0.15s;
+box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+.btn:active { transform: scale(0.97); }
+.btn.secondary { background: rgba(71, 85, 105, 0.6); box-shadow: none; }
+.btn.danger { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3); }
+.btn.success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3); }
+.btn.small { padding: 8px 14px; font-size: 14px; min-height: 38px; width: auto; }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* ===== Inputs ===== */
+input[type=“text”], input[type=“number”] {
+width: 100%; padding: 14px 16px; border-radius: 12px;
+border: 1px solid rgba(148, 163, 184, 0.25);
+background: rgba(15, 23, 42, 0.6); color: #f8fafc;
+font-size: 16px; -webkit-user-select: auto; user-select: auto;
+outline: none;
+}
+input:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.15); }
+
+/* ===== Profile list ===== */
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.profile-card {
+background: rgba(51, 65, 85, 0.4); border: 1px solid rgba(148, 163, 184, 0.15);
+border-radius: 16px; padding: 14px; text-align: center; cursor: pointer;
+position: relative; transition: all 0.2s;
+}
+.profile-card:active { transform: scale(0.97); }
+.profile-card.selected { border-color: #818cf8; background: rgba(99, 102, 241, 0.15); }
+.avatar {
+width: 56px; height: 56px; border-radius: 50%;
+display: flex; align-items: center; justify-content: center;
+font-size: 28px; margin: 0 auto 8px;
+background: linear-gradient(135deg, var(–ring-a, #6366f1), var(–ring-b, #8b5cf6));
+}
+.profile-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.profile-stats { font-size: 11px; color: #94a3b8; }
+.delete-btn {
+position: absolute; top: 6px; right: 6px;
+width: 24px; height: 24px; border-radius: 50%; border: none;
+background: rgba(239, 68, 68, 0.85); color: white; font-size: 14px;
+cursor: pointer; display: flex; align-items: center; justify-content: center;
+line-height: 1; padding: 0;
+}
+
+/* ===== Avatar picker ===== */
+.avatar-picker { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.avatar-option {
+width: 44px; height: 44px; border-radius: 50%;
+display: flex; align-items: center; justify-content: center;
+font-size: 22px; cursor: pointer; background: rgba(51, 65, 85, 0.5);
+border: 2px solid transparent;
+}
+.avatar-option.selected { border-color: #a5b4fc; background: rgba(99, 102, 241, 0.25); }
+
+/* ===== Mode / difficulty picker ===== */
+.mode-card {
+background: rgba(51, 65, 85, 0.4); border: 1px solid rgba(148, 163, 184, 0.15);
+border-radius: 16px; padding: 16px; margin-bottom: 10px;
+cursor: pointer; display: flex; align-items: center; gap: 14px;
+transition: all 0.2s;
+}
+.mode-card:active { transform: scale(0.98); }
+.mode-card.active { border-color: #818cf8; background: rgba(99, 102, 241, 0.15); }
+.mode-icon { font-size: 32px; }
+.mode-info { flex: 1; }
+.mode-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+.mode-desc { font-size: 12px; color: #94a3b8; }
+
+.diff-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 8px 0; }
+.diff-chip {
+padding: 10px 4px; border-radius: 10px; text-align: center;
+background: rgba(51, 65, 85, 0.5); cursor: pointer; font-size: 11px;
+border: 2px solid transparent; font-weight: 600;
+}
+.diff-chip.active { border-color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
+.diff-chip .num { display: block; font-size: 18px; font-weight: 800; color: #fbbf24; }
+
+/* ===== Schulte grid ===== */
+.schulte-stats {
+display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 14px;
+margin-bottom: 14px;
+}
+.stat { text-align: center; }
+.stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+.stat-value.target { color: #fbbf24; }
+.stat-value.time { color: #a5b4fc; }
+
+.schulte-grid {
+display: grid; gap: 4px; margin: 0 auto;
+background: rgba(15, 23, 42, 0.4); padding: 6px; border-radius: 14px;
+aspect-ratio: 1; max-width: 560px; width: 100%;
+}
+.schulte-cell {
+display: flex; align-items: center; justify-content: center;
+background: linear-gradient(135deg, rgba(71, 85, 105, 0.6), rgba(51, 65, 85, 0.8));
+border-radius: 8px; cursor: pointer; color: #f8fafc;
+font-weight: 700; border: 1px solid rgba(148, 163, 184, 0.1);
+transition: all 0.1s;
+}
+.schulte-cell:active { transform: scale(0.94); }
+.schulte-cell.correct {
+background: linear-gradient(135deg, #10b981, #059669);
+animation: pop 0.3s ease;
+}
+.schulte-cell.wrong {
+background: linear-gradient(135deg, #ef4444, #dc2626);
+animation: shake 0.3s ease;
+}
+@keyframes pop { 0%{transform:scale(1);} 50%{transform:scale(1.15);} 100%{transform:scale(1);} }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+
+/* ===== Memory game ===== */
+.memory-display {
+min-height: 120px; border-radius: 16px;
+background: rgba(15, 23, 42, 0.6); display: flex;
+align-items: center; justify-content: center;
+font-size: 72px; font-weight: 800; letter-spacing: 0.05em;
+margin-bottom: 14px; border: 1px solid rgba(148, 163, 184, 0.15);
+}
+.memory-display.sequence { color: #fbbf24; }
+.memory-display.input { color: #a5b4fc; font-size: 48px; }
+.memory-display .hint { font-size: 16px; color: #94a3b8; letter-spacing: normal; font-weight: 500; text-align: center; padding: 0 16px; }
+
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.key {
+padding: 18px 0; border-radius: 14px; border: none;
+background: linear-gradient(135deg, rgba(71, 85, 105, 0.8), rgba(51, 65, 85, 0.9));
+color: white; font-size: 24px; font-weight: 700; cursor: pointer;
+box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.key:active { transform: scale(0.95); background: rgba(99, 102, 241, 0.6); }
+.key.action { background: linear-gradient(135deg, #475569, #334155); font-size: 16px; }
+.key.submit { background: linear-gradient(135deg, #10b981, #059669); }
+
+/* ===== Timer bar ===== */
+.timer-bar {
+height: 6px; background: rgba(71, 85, 105, 0.4); border-radius: 3px;
+overflow: hidden; margin: 10px 0;
+}
+.timer-fill {
+height: 100%; background: linear-gradient(90deg, #10b981, #fbbf24, #ef4444);
+transition: width 0.1s linear; width: 100%;
+}
+
+/* ===== Screens & header ===== */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.header {
+display: flex; align-items: center; justify-content: space-between;
+padding: 4px 0 12px; gap: 10px;
+}
+.back-btn {
+background: rgba(51, 65, 85, 0.6); border: none; color: white;
+width: 40px; height: 40px; border-radius: 12px; font-size: 20px; cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+}
+.current-user {
+display: flex; align-items: center; gap: 8px;
+padding: 6px 12px 6px 6px; background: rgba(51, 65, 85, 0.5);
+border-radius: 999px; font-size: 13px; font-weight: 600;
+}
+.current-user .avatar { width: 28px; height: 28px; font-size: 14px; margin: 0; }
+
+/* ===== Leaderboard ===== */
+.lb-entry {
+display: flex; align-items: center; gap: 12px;
+padding: 10px 12px; border-radius: 12px;
+background: rgba(51, 65, 85, 0.4); margin-bottom: 6px;
+}
+.lb-rank {
+width: 32px; height: 32px; border-radius: 50%;
+display: flex; align-items: center; justify-content: center;
+background: rgba(71, 85, 105, 0.6); font-weight: 700; font-size: 13px;
+}
+.lb-rank.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.lb-rank.silver { background: linear-gradient(135deg, #cbd5e1, #94a3b8); }
+.lb-rank.bronze { background: linear-gradient(135deg, #fb923c, #ea580c); }
+.lb-name { flex: 1; font-weight: 600; font-size: 14px; }
+.lb-score { font-weight: 700; color: #fbbf24; }
+
+/* ===== Segmented tabs ===== */
+.tabs { display: flex; gap: 4px; padding: 4px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; margin-bottom: 12px; }
+.tab { flex: 1; padding: 10px; text-align: center; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600; color: #94a3b8; }
+.tab.active { background: rgba(99, 102, 241, 0.4); color: white; }
+
+/* ===== Result overlay ===== */
+.overlay {
+position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85);
+backdrop-filter: blur(8px); z-index: 100;
+display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+.overlay-card {
+background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+border: 1px solid rgba(148, 163, 184, 0.2);
+border-radius: 24px; padding: 28px 24px; max-width: 420px; width: 100%;
+text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.overlay-emoji { font-size: 56px; margin-bottom: 8px; }
+.overlay-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.overlay-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+.overlay-stat { padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; }
+
+.empty { text-align: center; color: #64748b; padding: 28px 16px; font-size: 14px; }
+
+/* Small screens tighten up */
+@media (max-width: 380px) {
+h1 { font-size: 26px; }
+.memory-display { font-size: 56px; }
+.memory-display.input { font-size: 40px; }
+.key { font-size: 20px; padding: 16px 0; }
+}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <!-- ============ HOME ============ -->
+  <div class="screen active" id="screen-home">
+    <h1>FocusQuest</h1>
+    <p class="sub">Train your concentration — mind over time.</p>
+
+```
+<div class="card">
+  <h3 style="margin-top:0;">Who's playing?</h3>
+  <div id="profile-list" class="profile-grid"></div>
+  <button class="btn secondary" style="margin-top:12px;" onclick="showAddProfile()">+ New Profile</button>
+</div>
+
+<div id="home-main" style="display:none;">
+  <h2>Choose a game</h2>
+  <div class="mode-card" onclick="goto('schulte-setup')">
+    <div class="mode-icon">🎯</div>
+    <div class="mode-info">
+      <div class="mode-title">Schulte Grid</div>
+      <div class="mode-desc">Find numbers in order as fast as you can</div>
+    </div>
+  </div>
+  <div class="mode-card" onclick="goto('memory-setup')">
+    <div class="mode-icon">🧠</div>
+    <div class="mode-info">
+      <div class="mode-title">Number Memory</div>
+      <div class="mode-desc">Watch the sequence, then type it back</div>
+    </div>
+  </div>
+
+  <h2>Your progress</h2>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" onclick="switchProgressTab(this,'schulte')">Schulte</div>
+      <div class="tab" onclick="switchProgressTab(this,'memory')">Memory</div>
+    </div>
+    <div id="progress-content"></div>
+  </div>
+
+  <h2>Leaderboards</h2>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" onclick="switchLbTab(this,'schulte')">Schulte Best Times</div>
+      <div class="tab" onclick="switchLbTab(this,'memory')">Memory Top Scores</div>
+    </div>
+    <div id="leaderboard-content"></div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ============ ADD PROFILE ============ -->
+
+  <div class="screen" id="screen-add-profile">
+    <div class="header">
+      <button class="back-btn" onclick="goto('home')">←</button>
+      <h2 style="margin:0;">New Profile</h2>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="card">
+      <h3>Name</h3>
+      <input type="text" id="new-name" maxlength="14" placeholder="Enter a name">
+      <h3>Pick an avatar</h3>
+      <div class="avatar-picker" id="avatar-picker"></div>
+      <button class="btn success" style="margin-top:16px;" onclick="saveProfile()">Create Profile</button>
+    </div>
+  </div>
+
+  <!-- ============ SCHULTE SETUP ============ -->
+
+  <div class="screen" id="screen-schulte-setup">
+    <div class="header">
+      <button class="back-btn" onclick="goto('home')">←</button>
+      <h2 style="margin:0;">🎯 Schulte Grid</h2>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">How it works</h3>
+      <p class="sub" style="margin:0;">Find every number in order, from 1 to the biggest. Use your eyes, not your finger — it builds peripheral vision and attention.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Difficulty</h3>
+      <div class="diff-row" id="schulte-diff-row"></div>
+      <div id="schulte-diff-desc" style="font-size:13px;color:#cbd5e1;margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Mode</h3>
+      <div class="mode-card active" id="smode-classic" onclick="setSchulteMode('classic')">
+        <div class="mode-icon">⏱️</div>
+        <div class="mode-info">
+          <div class="mode-title">Classic</div>
+          <div class="mode-desc">Complete one grid as fast as you can</div>
+        </div>
+      </div>
+      <div class="mode-card" id="smode-timed" onclick="setSchulteMode('timed')">
+        <div class="mode-icon">🔥</div>
+        <div class="mode-info">
+          <div class="mode-title">2-Minute Sprint</div>
+          <div class="mode-desc">How many grids can you finish in 2 min?</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="startSchulte()">Start</button>
+  </div>
+
+  <!-- ============ SCHULTE PLAY ============ -->
+
+  <div class="screen" id="screen-schulte-play">
+    <div class="header">
+      <button class="back-btn" onclick="quitSchulte()">←</button>
+      <div style="font-weight:700;">Schulte Grid</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="schulte-stats">
+      <div class="stat"><div class="stat-label">Find</div><div class="stat-value target" id="s-target">1</div></div>
+      <div class="stat"><div class="stat-label">Time</div><div class="stat-value time" id="s-time">0.0</div></div>
+      <div class="stat"><div class="stat-label" id="s-extra-label">Errors</div><div class="stat-value" id="s-extra">0</div></div>
+      <div class="stat"><div class="stat-label" id="s-extra2-label">Grid</div><div class="stat-value" id="s-extra2">5×5</div></div>
+    </div>
+    <div class="timer-bar" id="s-timer-bar" style="display:none;"><div class="timer-fill" id="s-timer-fill"></div></div>
+    <div class="schulte-grid" id="schulte-grid"></div>
+  </div>
+
+  <!-- ============ MEMORY SETUP ============ -->
+
+  <div class="screen" id="screen-memory-setup">
+    <div class="header">
+      <button class="back-btn" onclick="goto('home')">←</button>
+      <h2 style="margin:0;">🧠 Number Memory</h2>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">How it works</h3>
+      <p class="sub" style="margin:0;">Watch the number sequence carefully, then type it back from memory. Each round adds one more digit. Get it wrong and the round is over.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Starting difficulty</h3>
+      <div class="diff-row" id="memory-diff-row"></div>
+      <div id="memory-diff-desc" style="font-size:13px;color:#cbd5e1;margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Mode</h3>
+      <div class="mode-card active" id="mmode-classic" onclick="setMemoryMode('classic')">
+        <div class="mode-icon">📈</div>
+        <div class="mode-info">
+          <div class="mode-title">Classic</div>
+          <div class="mode-desc">Keep going until you miss. How far can you get?</div>
+        </div>
+      </div>
+      <div class="mode-card" id="mmode-timed" onclick="setMemoryMode('timed')">
+        <div class="mode-icon">🔥</div>
+        <div class="mode-info">
+          <div class="mode-title">2-Minute Sprint</div>
+          <div class="mode-desc">Score points per correct recall in 2 min</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="startMemory()">Start</button>
+  </div>
+
+  <!-- ============ MEMORY PLAY ============ -->
+
+  <div class="screen" id="screen-memory-play">
+    <div class="header">
+      <button class="back-btn" onclick="quitMemory()">←</button>
+      <div style="font-weight:700;">Number Memory</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="schulte-stats">
+      <div class="stat"><div class="stat-label">Round</div><div class="stat-value target" id="m-round">1</div></div>
+      <div class="stat"><div class="stat-label">Digits</div><div class="stat-value" id="m-length">3</div></div>
+      <div class="stat"><div class="stat-label">Score</div><div class="stat-value time" id="m-score">0</div></div>
+      <div class="stat"><div class="stat-label" id="m-extra-label">Best</div><div class="stat-value" id="m-extra">0</div></div>
+    </div>
+    <div class="timer-bar" id="m-timer-bar" style="display:none;"><div class="timer-fill" id="m-timer-fill"></div></div>
+    <div class="memory-display" id="memory-display">
+      <div class="hint">Ready?</div>
+    </div>
+    <div id="memory-keypad" style="display:none;">
+      <div class="keypad">
+        <button class="key" onclick="mKey('1')">1</button>
+        <button class="key" onclick="mKey('2')">2</button>
+        <button class="key" onclick="mKey('3')">3</button>
+        <button class="key" onclick="mKey('4')">4</button>
+        <button class="key" onclick="mKey('5')">5</button>
+        <button class="key" onclick="mKey('6')">6</button>
+        <button class="key" onclick="mKey('7')">7</button>
+        <button class="key" onclick="mKey('8')">8</button>
+        <button class="key" onclick="mKey('9')">9</button>
+        <button class="key action" onclick="mBack()">⌫</button>
+        <button class="key" onclick="mKey('0')">0</button>
+        <button class="key submit" onclick="mSubmit()">✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RESULT OVERLAY ============ -->
+
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <div class="overlay-emoji" id="ov-emoji">🎉</div>
+    <div class="overlay-title" id="ov-title">Done!</div>
+    <div class="sub" id="ov-sub"></div>
+    <div class="overlay-stats" id="ov-stats"></div>
+    <div class="btn-row">
+      <button class="btn secondary" onclick="closeOverlay(); goto('home');">Home</button>
+      <button class="btn" id="ov-again">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==================== STATE & STORAGE ==================== */
+const STORAGE_KEY = 'focusquest_v1';
+const AVATARS = ['🦊','🐼','🐵','🦁','🐯','🐸','🐙','🦄','🐲','🦉','🐢','🐨','🦖','🐳','🦋','🐝'];
+const RING_COLORS = [
+  ['#6366f1','#8b5cf6'],['#ec4899','#f43f5e'],['#10b981','#06b6d4'],
+  ['#f59e0b','#ef4444'],['#14b8a6','#6366f1'],['#a855f7','#ec4899']
+];
+
+let state = loadState();
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { profiles: [], currentProfileId: null };
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function currentProfile() {
+  return state.profiles.find(p => p.id === state.currentProfileId);
+}
+function newProfile(name, avatar) {
+  return {
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    name, avatar,
+    ringIdx: Math.floor(Math.random() * RING_COLORS.length),
+    schulte: {
+      // per-difficulty: bestTime (classic), bestTimedCount (sprint)
+      stats: { 1:{bt:null,btc:0,plays:0}, 2:{bt:null,btc:0,plays:0}, 3:{bt:null,btc:0,plays:0}, 4:{bt:null,btc:0,plays:0}, 5:{bt:null,btc:0,plays:0} }
+    },
+    memory: {
+      bestLength: 0, bestScore: 0,
+      stats: { 1:{bl:0,plays:0}, 2:{bl:0,plays:0}, 3:{bl:0,plays:0}, 4:{bl:0,plays:0}, 5:{bl:0,plays:0} }
+    }
+  };
+}
+
+/* ==================== SCREEN NAV ==================== */
+function goto(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'home') renderHome();
+  if (name === 'schulte-setup') renderSchulteSetup();
+  if (name === 'memory-setup') renderMemorySetup();
+  window.scrollTo(0,0);
+}
+
+/* ==================== HOME / PROFILES ==================== */
+function renderHome() {
+  const list = document.getElementById('profile-list');
+  list.innerHTML = '';
+  if (state.profiles.length === 0) {
+    list.innerHTML = '<div class="empty" style="grid-column:1/-1;">No profiles yet.<br>Create one to begin.</div>';
+    document.getElementById('home-main').style.display = 'none';
+    return;
+  }
+  state.profiles.forEach(p => {
+    const ring = RING_COLORS[p.ringIdx % RING_COLORS.length];
+    const isSel = p.id === state.currentProfileId;
+    const bestL = p.memory.bestLength || 0;
+    const card = document.createElement('div');
+    card.className = 'profile-card' + (isSel ? ' selected' : '');
+    card.innerHTML = `
+      <button class="delete-btn" onclick="event.stopPropagation(); deleteProfile('${p.id}')">×</button>
+      <div class="avatar" style="--ring-a:${ring[0]};--ring-b:${ring[1]}">${p.avatar}</div>
+      <div class="profile-name">${escapeHtml(p.name)}</div>
+      <div class="profile-stats">Best memory: ${bestL}</div>
+    `;
+    card.onclick = () => { state.currentProfileId = p.id; saveState(); renderHome(); };
+    list.appendChild(card);
+  });
+  if (!currentProfile() && state.profiles.length > 0) {
+    state.currentProfileId = state.profiles[0].id; saveState();
+  }
+  document.getElementById('home-main').style.display = currentProfile() ? 'block' : 'none';
+  renderProgress('schulte');
+  renderLeaderboard('schulte');
+}
+
+function deleteProfile(id) {
+  if (!confirm('Delete this profile? All progress will be lost.')) return;
+  state.profiles = state.profiles.filter(p => p.id !== id);
+  if (state.currentProfileId === id) state.currentProfileId = state.profiles[0]?.id || null;
+  saveState(); renderHome();
+}
+
+let draftAvatar = AVATARS[0];
+function showAddProfile() {
+  draftAvatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+  document.getElementById('new-name').value = '';
+  const picker = document.getElementById('avatar-picker');
+  picker.innerHTML = '';
+  AVATARS.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'avatar-option' + (a === draftAvatar ? ' selected' : '');
+    el.textContent = a;
+    el.onclick = () => {
+      draftAvatar = a;
+      picker.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+    picker.appendChild(el);
+  });
+  goto('add-profile');
+}
+
+function saveProfile() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  const p = newProfile(name, draftAvatar);
+  state.profiles.push(p);
+  state.currentProfileId = p.id;
+  saveState();
+  goto('home');
+}
+
+/* ==================== PROGRESS & LEADERBOARD ==================== */
+function switchProgressTab(el, type) {
+  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderProgress(type);
+}
+function switchLbTab(el, type) {
+  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderLeaderboard(type);
+}
+
+function renderProgress(type) {
+  const c = document.getElementById('progress-content');
+  const p = currentProfile();
+  if (!p) { c.innerHTML = ''; return; }
+  if (type === 'schulte') {
+    let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+    for (let d=1; d<=5; d++) {
+      const s = p.schulte.stats[d];
+      const bt = s.bt ? s.bt.toFixed(1) + 's' : '—';
+      const btc = s.btc || 0;
+      html += `
+        <div style="padding:10px;background:rgba(15,23,42,0.5);border-radius:10px;">
+          <div style="font-size:11px;color:#94a3b8;">Level ${d} · ${SCHULTE_CFG[d].label}</div>
+          <div style="font-size:13px;margin-top:4px;">Best time: <b style="color:#a5b4fc;">${bt}</b></div>
+          <div style="font-size:13px;">Sprint best: <b style="color:#fbbf24;">${btc}</b> grids</div>
+        </div>`;
+    }
+    html += '</div>';
+    c.innerHTML = html;
+  } else {
+    let html = `<div style="padding:12px;background:rgba(15,23,42,0.5);border-radius:10px;margin-bottom:8px;">
+      <div style="font-size:12px;color:#94a3b8;">Overall best</div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;">
+        <div>Longest sequence: <b style="color:#fbbf24;">${p.memory.bestLength}</b> digits</div>
+        <div>Top score: <b style="color:#a5b4fc;">${p.memory.bestScore}</b></div>
+      </div>
+    </div>`;
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+    for (let d=1; d<=5; d++) {
+      const s = p.memory.stats[d];
+      html += `
+        <div style="padding:10px;background:rgba(15,23,42,0.5);border-radius:10px;">
+          <div style="font-size:11px;color:#94a3b8;">Level ${d} · ${MEMORY_CFG[d].label}</div>
+          <div style="font-size:13px;margin-top:4px;">Best: <b style="color:#a5b4fc;">${s.bl}</b> digits</div>
+          <div style="font-size:13px;">Plays: <b>${s.plays}</b></div>
+        </div>`;
+    }
+    html += '</div>';
+    c.innerHTML = html;
+  }
+}
+
+function renderLeaderboard(type) {
+  const c = document.getElementById('leaderboard-content');
+  if (type === 'schulte') {
+    // rank by best classic time at highest attempted level (lower = better). Use level 3 as "standard".
+    const rows = state.profiles.map(p => {
+      // pick best time from any level (fastest overall)
+      let bt = null, level = null;
+      for (let d=5; d>=1; d--) {
+        if (p.schulte.stats[d].bt != null) {
+          if (bt == null || p.schulte.stats[d].bt < bt) { bt = p.schulte.stats[d].bt; level = d; }
+        }
+      }
+      return { p, bt, level };
+    }).filter(r => r.bt != null).sort((a,b) => a.bt - b.bt);
+    if (rows.length === 0) { c.innerHTML = '<div class="empty">No Schulte runs yet.</div>'; return; }
+    c.innerHTML = rows.slice(0,10).map((r,i) => {
+      const ring = RING_COLORS[r.p.ringIdx % RING_COLORS.length];
+      const cls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      return `<div class="lb-entry">
+        <div class="lb-rank ${cls}">${i+1}</div>
+        <div class="avatar" style="width:32px;height:32px;font-size:16px;margin:0;--ring-a:${ring[0]};--ring-b:${ring[1]}">${r.p.avatar}</div>
+        <div class="lb-name">${escapeHtml(r.p.name)} <span style="color:#94a3b8;font-size:11px;font-weight:500;">L${r.level}</span></div>
+        <div class="lb-score">${r.bt.toFixed(1)}s</div>
+      </div>`;
+    }).join('');
+  } else {
+    const rows = state.profiles.map(p => ({ p, bl: p.memory.bestLength, bs: p.memory.bestScore }))
+      .filter(r => r.bl > 0).sort((a,b) => b.bl - a.bl || b.bs - a.bs);
+    if (rows.length === 0) { c.innerHTML = '<div class="empty">No Memory runs yet.</div>'; return; }
+    c.innerHTML = rows.slice(0,10).map((r,i) => {
+      const ring = RING_COLORS[r.p.ringIdx % RING_COLORS.length];
+      const cls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      return `<div class="lb-entry">
+        <div class="lb-rank ${cls}">${i+1}</div>
+        <div class="avatar" style="width:32px;height:32px;font-size:16px;margin:0;--ring-a:${ring[0]};--ring-b:${ring[1]}">${r.p.avatar}</div>
+        <div class="lb-name">${escapeHtml(r.p.name)}</div>
+        <div class="lb-score">${r.bl} digits</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+/* ==================== SCHULTE CONFIG ==================== */
+// Age-graded difficulty (grid size dominates): 5-8 → 3×3, 8-12 → 4×4, 12-15 → 5×5,
+// 15-18 → 6×6, 18+ → 7×7. Harder levels also use a denser visual style.
+const SCHULTE_CFG = {
+  1: { size: 3, label: '5–8 yrs', desc: '3×3 grid · numbers 1–9. Gentle introduction for young children.' },
+  2: { size: 4, label: '8–12 yrs', desc: '4×4 grid · numbers 1–16. Standard beginner training.' },
+  3: { size: 5, label: '12–15 yrs', desc: '5×5 grid · numbers 1–25. The classic Schulte table.' },
+  4: { size: 6, label: '15–18 yrs', desc: '6×6 grid · numbers 1–36. Challenging attention span.' },
+  5: { size: 7, label: '18+ yrs', desc: '7×7 grid · numbers 1–49. Advanced peripheral focus.' }
+};
+let schulteDiff = 3, schulteMode = 'classic';
+let schulteGame = null;
+
+function renderSchulteSetup() {
+  const row = document.getElementById('schulte-diff-row');
+  row.innerHTML = '';
+  for (let d=1; d<=5; d++) {
+    const el = document.createElement('div');
+    el.className = 'diff-chip' + (d === schulteDiff ? ' active' : '');
+    el.innerHTML = `<span class="num">L${d}</span>${SCHULTE_CFG[d].label}`;
+    el.onclick = () => { schulteDiff = d; renderSchulteSetup(); };
+    row.appendChild(el);
+  }
+  document.getElementById('schulte-diff-desc').textContent = SCHULTE_CFG[schulteDiff].desc;
+  document.getElementById('smode-classic').classList.toggle('active', schulteMode === 'classic');
+  document.getElementById('smode-timed').classList.toggle('active', schulteMode === 'timed');
+}
+function setSchulteMode(m) { schulteMode = m; renderSchulteSetup(); }
+
+/* ==================== SCHULTE PLAY ==================== */
+function startSchulte() {
+  schulteGame = {
+    size: SCHULTE_CFG[schulteDiff].size,
+    target: 1, errors: 0, startTime: Date.now(),
+    mode: schulteMode, completed: 0,
+    timerEnd: schulteMode === 'timed' ? Date.now() + 120000 : null,
+    raf: null
+  };
+  buildSchulteGrid();
+  goto('schulte-play');
+  document.getElementById('s-extra2-label').textContent = 'Grid';
+  document.getElementById('s-extra2').textContent = `${schulteGame.size}×${schulteGame.size}`;
+  if (schulteMode === 'timed') {
+    document.getElementById('s-extra-label').textContent = 'Grids';
+    document.getElementById('s-extra').textContent = '0';
+    document.getElementById('s-timer-bar').style.display = 'block';
+  } else {
+    document.getElementById('s-extra-label').textContent = 'Errors';
+    document.getElementById('s-extra').textContent = '0';
+    document.getElementById('s-timer-bar').style.display = 'none';
+  }
+  tickSchulte();
+}
+
+function buildSchulteGrid() {
+  const grid = document.getElementById('schulte-grid');
+  const n = schulteGame.size;
+  grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  // Font size scales with grid
+  const fontSize = n === 3 ? 42 : n === 4 ? 36 : n === 5 ? 28 : n === 6 ? 22 : 18;
+  const nums = []; for (let i=1; i<=n*n; i++) nums.push(i);
+  shuffle(nums);
+  grid.innerHTML = '';
+  nums.forEach(num => {
+    const cell = document.createElement('div');
+    cell.className = 'schulte-cell';
+    cell.textContent = num;
+    cell.style.fontSize = fontSize + 'px';
+    cell.dataset.num = num;
+    cell.onclick = () => tapSchulteCell(cell, num);
+    grid.appendChild(cell);
+  });
+  schulteGame.target = 1;
+  document.getElementById('s-target').textContent = '1';
+}
+
+function tapSchulteCell(cell, num) {
+  if (!schulteGame) return;
+  if (num === schulteGame.target) {
+    cell.classList.add('correct');
+    cell.onclick = null;
+    schulteGame.target++;
+    document.getElementById('s-target').textContent = schulteGame.target;
+    if (schulteGame.target > schulteGame.size * schulteGame.size) {
+      onSchulteComplete();
+    }
+  } else {
+    cell.classList.add('wrong');
+    setTimeout(() => cell.classList.remove('wrong'), 300);
+    if (schulteGame.mode === 'classic') {
+      schulteGame.errors++;
+      document.getElementById('s-extra').textContent = schulteGame.errors;
+    }
+  }
+}
+
+function onSchulteComplete() {
+  if (schulteGame.mode === 'classic') {
+    const elapsed = (Date.now() - schulteGame.startTime) / 1000;
+    const p = currentProfile();
+    const st = p.schulte.stats[schulteDiff];
+    st.plays++;
+    const isBest = st.bt == null || elapsed < st.bt;
+    if (isBest) st.bt = elapsed;
+    saveState();
+    cancelAnimationFrame(schulteGame.raf);
+    showOverlay({
+      emoji: isBest ? '🏆' : '🎯',
+      title: isBest ? 'New Best Time!' : 'Grid Complete!',
+      sub: `Level ${schulteDiff} · ${schulteGame.size}×${schulteGame.size}`,
+      stats: [
+        { label: 'Time', value: elapsed.toFixed(1) + 's' },
+        { label: 'Errors', value: schulteGame.errors },
+        { label: 'Best', value: st.bt.toFixed(1) + 's' },
+        { label: 'Plays', value: st.plays }
+      ],
+      again: () => { closeOverlay(); startSchulte(); }
+    });
+    schulteGame = null;
+  } else {
+    // Sprint: move to next grid, increment count
+    schulteGame.completed++;
+    document.getElementById('s-extra').textContent = schulteGame.completed;
+    buildSchulteGrid();
+  }
+}
+
+function tickSchulte() {
+  if (!schulteGame) return;
+  const now = Date.now();
+  if (schulteGame.mode === 'classic') {
+    const elapsed = (now - schulteGame.startTime) / 1000;
+    document.getElementById('s-time').textContent = elapsed.toFixed(1);
+  } else {
+    const remain = Math.max(0, schulteGame.timerEnd - now);
+    const secs = remain / 1000;
+    document.getElementById('s-time').textContent = secs.toFixed(1);
+    document.getElementById('s-timer-fill').style.width = (remain / 120000 * 100) + '%';
+    if (remain <= 0) {
+      const p = currentProfile();
+      const st = p.schulte.stats[schulteDiff];
+      st.plays++;
+      const isBest = schulteGame.completed > st.btc;
+      if (isBest) st.btc = schulteGame.completed;
+      saveState();
+      const total = schulteGame.completed;
+      schulteGame = null;
+      showOverlay({
+        emoji: isBest ? '🏆' : '🔥',
+        title: isBest ? 'New Sprint Record!' : 'Time\'s Up!',
+        sub: `Level ${schulteDiff} · 2-Minute Sprint`,
+        stats: [
+          { label: 'Grids', value: total },
+          { label: 'Best', value: st.btc },
+          { label: 'Level', value: schulteDiff },
+          { label: 'Plays', value: st.plays }
+        ],
+        again: () => { closeOverlay(); startSchulte(); }
+      });
+      return;
+    }
+  }
+  schulteGame.raf = requestAnimationFrame(tickSchulte);
+}
+
+function quitSchulte() {
+  if (schulteGame) cancelAnimationFrame(schulteGame.raf);
+  schulteGame = null;
+  goto('home');
+}
+
+/* ==================== MEMORY CONFIG ==================== */
+// Starting length + show-time per digit graded by age.
+const MEMORY_CFG = {
+  1: { label: '5–8 yrs', start: 3, showMs: 1000, desc: 'Starts at 3 digits · 1 second per digit. Kind to young minds.' },
+  2: { label: '8–12 yrs', start: 4, showMs: 850, desc: 'Starts at 4 digits · 0.85s per digit. Standard practice.' },
+  3: { label: '12–15 yrs', start: 5, showMs: 700, desc: 'Starts at 5 digits · 0.7s per digit.' },
+  4: { label: '15–18 yrs', start: 6, showMs: 600, desc: 'Starts at 6 digits · 0.6s per digit.' },
+  5: { label: '18+ yrs', start: 7, showMs: 500, desc: 'Starts at 7 digits · 0.5s per digit. Challenging.' }
+};
+let memoryDiff = 3, memoryMode = 'classic';
+let memoryGame = null;
+
+function renderMemorySetup() {
+  const row = document.getElementById('memory-diff-row');
+  row.innerHTML = '';
+  for (let d=1; d<=5; d++) {
+    const el = document.createElement('div');
+    el.className = 'diff-chip' + (d === memoryDiff ? ' active' : '');
+    el.innerHTML = `<span class="num">L${d}</span>${MEMORY_CFG[d].label}`;
+    el.onclick = () => { memoryDiff = d; renderMemorySetup(); };
+    row.appendChild(el);
+  }
+  document.getElementById('memory-diff-desc').textContent = MEMORY_CFG[memoryDiff].desc;
+  document.getElementById('mmode-classic').classList.toggle('active', memoryMode === 'classic');
+  document.getElementById('mmode-timed').classList.toggle('active', memoryMode === 'timed');
+}
+function setMemoryMode(m) { memoryMode = m; renderMemorySetup(); }
+
+/* ==================== MEMORY PLAY ==================== */
+function startMemory() {
+  const cfg = MEMORY_CFG[memoryDiff];
+  memoryGame = {
+    round: 1, length: cfg.start, showMs: cfg.showMs,
+    sequence: '', input: '', score: 0, best: 0,
+    mode: memoryMode, phase: 'show',
+    timerEnd: memoryMode === 'timed' ? Date.now() + 120000 : null,
+    raf: null
+  };
+  goto('memory-play');
+  document.getElementById('m-extra-label').textContent = memoryMode === 'timed' ? 'Time' : 'Best';
+  if (memoryMode === 'timed') {
+    document.getElementById('m-timer-bar').style.display = 'block';
+    tickMemoryTimer();
+  } else {
+    document.getElementById('m-timer-bar').style.display = 'none';
+  }
+  nextRound();
+}
+
+function nextRound() {
+  if (!memoryGame) return;
+  memoryGame.input = '';
+  memoryGame.sequence = '';
+  for (let i=0; i<memoryGame.length; i++) memoryGame.sequence += Math.floor(Math.random()*10);
+  document.getElementById('m-round').textContent = memoryGame.round;
+  document.getElementById('m-length').textContent = memoryGame.length;
+  document.getElementById('m-score').textContent = memoryGame.score;
+  document.getElementById('m-extra').textContent = memoryMode === 'timed'
+    ? Math.max(0, Math.ceil((memoryGame.timerEnd - Date.now())/1000))
+    : memoryGame.best;
+  document.getElementById('memory-keypad').style.display = 'none';
+  showMemorySequence();
+}
+
+function showMemorySequence() {
+  if (!memoryGame) return;
+  memoryGame.phase = 'show';
+  const disp = document.getElementById('memory-display');
+  disp.className = 'memory-display';
+  disp.innerHTML = '<div class="hint">Get ready…</div>';
+  setTimeout(() => {
+    if (!memoryGame) return;
+    let i = 0;
+    const showNext = () => {
+      if (!memoryGame) return;
+      if (i >= memoryGame.sequence.length) {
+        disp.className = 'memory-display';
+        disp.innerHTML = '<div class="hint">Type what you saw</div>';
+        setTimeout(() => {
+          if (!memoryGame) return;
+          memoryGame.phase = 'input';
+          disp.className = 'memory-display input';
+          disp.innerHTML = '<span id="mem-typed">_</span>';
+          document.getElementById('memory-keypad').style.display = 'block';
+        }, 500);
+        return;
+      }
+      disp.className = 'memory-display sequence';
+      disp.innerHTML = memoryGame.sequence[i];
+      i++;
+      setTimeout(() => {
+        if (!memoryGame) return;
+        disp.innerHTML = '';
+        setTimeout(showNext, 150);
+      }, memoryGame.showMs);
+    };
+    showNext();
+  }, 700);
+}
+
+function mKey(d) {
+  if (!memoryGame || memoryGame.phase !== 'input') return;
+  if (memoryGame.input.length >= memoryGame.sequence.length) return;
+  memoryGame.input += d;
+  updateMemoryTyped();
+  if (memoryGame.input.length === memoryGame.sequence.length) {
+    setTimeout(mSubmit, 150);
+  }
+}
+function mBack() {
+  if (!memoryGame || memoryGame.phase !== 'input') return;
+  memoryGame.input = memoryGame.input.slice(0, -1);
+  updateMemoryTyped();
+}
+function updateMemoryTyped() {
+  const el = document.getElementById('mem-typed');
+  if (el) el.textContent = memoryGame.input || '_';
+}
+function mSubmit() {
+  if (!memoryGame || memoryGame.phase !== 'input') return;
+  if (memoryGame.input.length === 0) return;
+  const correct = memoryGame.input === memoryGame.sequence;
+  memoryGame.phase = 'done';
+  document.getElementById('memory-keypad').style.display = 'none';
+  const disp = document.getElementById('memory-display');
+  if (correct) {
+    disp.className = 'memory-display';
+    disp.innerHTML = `<div style="color:#10b981;">✓ ${memoryGame.sequence}</div>`;
+    memoryGame.score += memoryGame.length * 10;
+    if (memoryGame.length > memoryGame.best) memoryGame.best = memoryGame.length;
+    // save best globally
+    const p = currentProfile();
+    if (memoryGame.length > p.memory.stats[memoryDiff].bl) p.memory.stats[memoryDiff].bl = memoryGame.length;
+    if (memoryGame.length > p.memory.bestLength) p.memory.bestLength = memoryGame.length;
+    if (memoryGame.score > p.memory.bestScore) p.memory.bestScore = memoryGame.score;
+    saveState();
+    setTimeout(() => {
+      if (!memoryGame) return;
+      memoryGame.round++;
+      memoryGame.length++;
+      // In timed mode, check remaining time before starting next round
+      if (memoryGame.mode === 'timed' && memoryGame.timerEnd - Date.now() <= 0) {
+        endMemory(true);
+      } else {
+        nextRound();
+      }
+    }, 1000);
+  } else {
+    disp.className = 'memory-display';
+    disp.innerHTML = `<div style="color:#ef4444;font-size:28px;">Answer: ${memoryGame.sequence}</div><div class="hint" style="margin-top:8px;">You typed: ${memoryGame.input}</div>`;
+    // classic: game over. timed: count as miss but keep going with same length (no grow).
+    const p = currentProfile();
+    p.memory.stats[memoryDiff].plays++;
+    saveState();
+    if (memoryGame.mode === 'classic') {
+      setTimeout(() => endMemory(false), 1500);
+    } else {
+      setTimeout(() => {
+        if (!memoryGame) return;
+        memoryGame.round++;
+        // slightly back off in timed mode
+        if (memoryGame.length > MEMORY_CFG[memoryDiff].start) memoryGame.length--;
+        if (memoryGame.timerEnd - Date.now() <= 0) endMemory(true);
+        else nextRound();
+      }, 1800);
+    }
+  }
+}
+
+function tickMemoryTimer() {
+  if (!memoryGame || memoryGame.mode !== 'timed') return;
+  const remain = Math.max(0, memoryGame.timerEnd - Date.now());
+  document.getElementById('m-extra').textContent = Math.ceil(remain / 1000);
+  document.getElementById('m-timer-fill').style.width = (remain / 120000 * 100) + '%';
+  if (remain <= 0 && memoryGame.phase !== 'done') {
+    endMemory(true);
+    return;
+  }
+  memoryGame.raf = requestAnimationFrame(tickMemoryTimer);
+}
+
+function endMemory(isTimed) {
+  if (!memoryGame) return;
+  if (memoryGame.raf) cancelAnimationFrame(memoryGame.raf);
+  const p = currentProfile();
+  const st = p.memory.stats[memoryDiff];
+  st.plays = (st.plays || 0);
+  if (memoryGame.best > st.bl) st.bl = memoryGame.best;
+  if (memoryGame.best > p.memory.bestLength) p.memory.bestLength = memoryGame.best;
+  if (memoryGame.score > p.memory.bestScore) p.memory.bestScore = memoryGame.score;
+  saveState();
+  const best = memoryGame.best, score = memoryGame.score, round = memoryGame.round;
+  const wasNewBest = memoryGame.best === p.memory.stats[memoryDiff].bl && memoryGame.best > 0;
+  memoryGame = null;
+  showOverlay({
+    emoji: wasNewBest ? '🏆' : (isTimed ? '🔥' : '🧠'),
+    title: wasNewBest ? 'New Memory Record!' : (isTimed ? 'Time\'s Up!' : 'Round Over'),
+    sub: `Level ${memoryDiff} · ${isTimed ? '2-Minute Sprint' : 'Classic'}`,
+    stats: [
+      { label: 'Best Length', value: best },
+      { label: 'Score', value: score },
+      { label: 'Rounds', value: round },
+      { label: 'All-Time', value: p.memory.bestLength }
+    ],
+    again: () => { closeOverlay(); startMemory(); }
+  });
+}
+
+function quitMemory() {
+  if (memoryGame && memoryGame.raf) cancelAnimationFrame(memoryGame.raf);
+  memoryGame = null;
+  goto('home');
+}
+
+/* ==================== OVERLAY ==================== */
+function showOverlay({ emoji, title, sub, stats, again }) {
+  document.getElementById('ov-emoji').textContent = emoji;
+  document.getElementById('ov-title').textContent = title;
+  document.getElementById('ov-sub').textContent = sub || '';
+  const sc = document.getElementById('ov-stats');
+  sc.innerHTML = stats.map(s => `<div class="overlay-stat"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div></div>`).join('');
+  document.getElementById('ov-again').onclick = again;
+  document.getElementById('overlay').classList.add('active');
+}
+function closeOverlay() { document.getElementById('overlay').classList.remove('active'); }
+
+/* ==================== UTILS ==================== */
+function shuffle(a) {
+  for (let i=a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ==================== INIT ==================== */
+renderHome();
+
+// Prevent pull-to-refresh interfering during play
+document.body.addEventListener('touchmove', e => {
+  if (document.querySelector('#screen-schulte-play.active') || document.querySelector('#screen-memory-play.active')) {
+    if (e.touches.length === 1) e.preventDefault();
+  }
+}, { passive: false });
+</script>
+
+</body>
+</html>
